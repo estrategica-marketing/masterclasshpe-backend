@@ -1,0 +1,37 @@
+{
+   "name": "masterclasshpe-backend",
+   "version": "1.0.0",
+   "main": "server.js",
+   "type": "module",
+   "engines": {
+      "node": "24.x"
+   },
+   "scripts": {
+      "dev": "nodemon server.js",
+      "start": "node server.js",
+      "init-tables": "node models/tables.js",
+      "init-catalogs": "node models/catalogos.js",
+      "init-seeds": "node models/seeds.js",
+      "init-db": "npm run init-tables && npm run init-catalogs && npm run init-seeds",
+      "clean-data": "node models/limpiar.js",
+      "crear-admin": "node models/crearAdmin.js",
+      "test": "node --test --test-concurrency=1 \"tests/**/*.test.js\""
+   },
+   "dependencies": {
+      "bcrypt": "^6.0.0",
+      "cookie-parser": "^1.4.7",
+      "cors": "^2.8.6",
+      "dotenv": "^18.0.10",
+      "exceljs": "^4.4.0",
+      "express": "^5.3.0",
+      "express-rate-limit": "^8.7.3",
+      "helmet": "^8.3.0",
+      "jsonwebtoken": "^9.0.3",
+      "nodemailer": "^10.4.0",
+      "pg": "^8.23.1"
+   },
+   "devDependencies": {
+      "nodemon": "^3.1.14",
+      "supertest": "^7.3.2"
+   }
+}
