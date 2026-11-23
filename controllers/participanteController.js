@@ -5,6 +5,8 @@ const responderError = crearResponderError("ParticipanteController", {
    VALIDACION: [400, "Datos inválidos"],
    PARTICIPANTE_NOT_FOUND: [404, "Participante no encontrado"],
    EMAIL_DUPLICADO: [409, "Ya existe una cuenta con ese correo"],
+   CUENTA_INACTIVA: [409, "La cuenta está inactiva"],
+   YA_ACTIVADA: [409, "La cuenta ya fue activada"],
 });
 
 const idValido = (v) => (Number.isInteger(Number(v)) && Number(v) > 0 ? Number(v) : null);
@@ -55,6 +57,16 @@ export const ParticipanteController = {
          return res.json({ success: true, data: await ParticipanteService.update(id, req.body ?? {}) });
       } catch (err) {
          return responderError(res, "update", err);
+      }
+   },
+
+   async reenviarActivacion(req, res) {
+      try {
+         const id = idValido(req.params.id);
+         if (!id) return res.status(400).json({ success: false, message: "Id inválido" });
+         return res.json({ success: true, data: await ParticipanteService.reenviarActivacion(id) });
+      } catch (err) {
+         return responderError(res, "reenviarActivacion", err);
       }
    },
 

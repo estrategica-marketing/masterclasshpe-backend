@@ -5,6 +5,7 @@ import { fallo } from "../utils/errores.js";
 import { CANALES, PUESTOS, esEmail, normalizarEmail } from "../utils/validar.js";
 import { generarCSV, generarXLSX } from "../utils/exportar.js";
 import { validarPerfil } from "./perfilService.js";
+import { AuthService } from "./authService.js";
 
 const ETIQUETA_PUESTO = {
    preventa: "Preventa",
@@ -98,6 +99,10 @@ export const ParticipanteService = {
       if (!u || u.rol !== "PARTICIPANTE") fallo("PARTICIPANTE_NOT_FOUND");
       await UserDao.setActivo(id, activo);
       return this.get(id);
+   },
+
+   async reenviarActivacion(id) {
+      return AuthService.reenviarActivacion(id);
    },
 
    async exportar(query, formato) {

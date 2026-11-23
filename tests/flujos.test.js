@@ -278,6 +278,42 @@ describe("administración de participantes", () => {
       assert.equal(adminComoParticipante.status, 404);
    });
 
+   test("admin reenvía el correo de activación; el link anterior deja de servir", async () => {
+      const email = "reenvio@partner.com";
+      await request(app).post(`${API}/auth/registro`).send(registro({ email, nombre_completo: "Rita Reenvío" }));
+      const tokenViejo = tokenDeUltimoCorreo(email);
+      const { rows } = await pool.query(`SELECT id_user FROM users WHERE email = $1`, [email]);
+      const id = rows[0].id_user;
+      const ruta = `${API}/admin/participantes/${id}/reenviar-activacion`;
+
+      assert.equal((await request(app).post(ruta)).status, 401);
+      // La sesión de `participante` quedó cerrada al desactivarlo en el test anterior: se abre otra.
+      const otro = request.agent(app);
+      await otro.post(`${API}/auth/login`).send({ email: "ana.perez@partner.com", password: PASS });
+      assert.equal((await otro.post(ruta)).status, 403);
+
+      const correosAntes = bandejaTest.filter((c) => c.to === email).length;
+      const r = await admin.post(ruta);
+      assert.equal(r.status, 200, JSON.stringify(r.body));
+      assert.equal(r.body.data.email, email);
+      assert.equal(bandejaTest.filter((c) => c.to === email).length, correosAntes + 1);
+
+      const tokenNuevo = tokenDeUltimoCorreo(email);
+      assert.notEqual(tokenNuevo, tokenViejo);
+      const viejo = await request(app).post(`${API}/auth/restablecer`).send({ token: tokenViejo, password: PASS });
+      assert.equal(viejo.status, 400);
+      const nuevo = await request(app).post(`${API}/auth/restablecer`).send({ token: tokenNuevo, password: PASS });
+      assert.equal(nuevo.status, 200, JSON.stringify(nuevo.body));
+
+      // Ya activada, administrador o inexistente: no se reenvía nada.
+      assert.equal((await admin.post(ruta)).status, 409);
+      assert.equal((await admin.post(`${API}/admin/participantes/1/reenviar-activacion`)).status, 404);
+      assert.equal((await admin.post(`${API}/admin/participantes/999999/reenviar-activacion`)).status, 404);
+
+      // No debe alterar los conteos que verifican los tests siguientes.
+      await pool.query(`DELETE FROM users WHERE id_user = $1`, [id]);
+   });
+
    test("exporta CSV y XLSX con filtros", async () => {
       // Valor malicioso para validar neutralización de fórmulas.
       await request(app).post(`${API}/auth/registro`).send(registro({ email: "f@x.com", nombre_completo: "=HYPERLINK(1)" }));

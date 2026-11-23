@@ -9,5 +9,6 @@ router.get("/exportar", ParticipanteController.exportar);
 router.get("/:id", ParticipanteController.getById);
 router.put("/:id", ParticipanteController.update);
 router.patch("/:id/activo", ParticipanteController.setActivo);
+router.post("/:id/reenviar-activacion", ParticipanteController.reenviarActivacion);
 
 export default router;

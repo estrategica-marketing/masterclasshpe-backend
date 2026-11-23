@@ -104,6 +104,21 @@ export const AuthService = {
       await enviarCorreo(mensaje);
    },
 
+   // Reenvío pedido por un administrador: sólo para participantes activos que aún no activan su cuenta.
+   // Los links anteriores dejan de servir; el nuevo vence en 48 h.
+   async reenviarActivacion(id_user) {
+      const mensaje = await withTransaction(async (client) => {
+         const user = await UserDao.findById(id_user, client);
+         if (!user || user.rol !== "PARTICIPANTE") fallo("PARTICIPANTE_NOT_FOUND");
+         if (!user.activo) fallo("CUENTA_INACTIVA");
+         if (user.email_verificado_at) fallo("YA_ACTIVADA");
+         await TokenDao.invalidarDeUsuario(id_user, client);
+         return emitirTokenCorreo({ ...user, nombre: user.nombre_completo, tipo: "ACTIVACION" }, client);
+      });
+      await enviarCorreo(mensaje);
+      return { email: mensaje.to };
+   },
+
    // Activación y recuperación comparten flujo: token de un solo uso + nueva contraseña.
    async restablecer({ token, password }) {
       if (typeof token !== "string" || token.length < 20 || token.length > 200) fallo("TOKEN_INVALIDO");
