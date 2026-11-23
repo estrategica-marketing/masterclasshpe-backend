@@ -82,6 +82,12 @@ describe("autenticación y registro", () => {
       assert.equal(ok.status, 200);
       assert.equal(ok.body.data.tipo, "ACTIVACION");
 
+      // Al activar llega el correo de bienvenida, con link al login (sin token).
+      const bienvenida = bandejaTest.at(-1);
+      assert.equal(bienvenida.to, email);
+      assert.match(bienvenida.subject, /Bienvenido/);
+      assert.match(bienvenida.text, /\/es\/login$/);
+
       // Token de un solo uso.
       const reuso = await request(app).post(`${API}/auth/restablecer`).send({ token, password: PASS });
       assert.equal(reuso.status, 400);

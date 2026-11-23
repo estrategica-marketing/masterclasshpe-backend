@@ -64,6 +64,23 @@ const COPY = {
    },
 };
 
+const BIENVENIDA = {
+   es: {
+      subject: "Bienvenido a la MasterClass HPE",
+      titulo: "Tu cuenta está activa",
+      saludo: "te damos la bienvenida a la MasterClass HPE.",
+      cuerpo: "Tu cuenta quedó activada y tu registro está confirmado. Ya puedes iniciar sesión con tu correo y la contraseña que creaste.",
+      boton: "Iniciar sesión",
+   },
+   en: {
+      subject: "Welcome to the HPE MasterClass",
+      titulo: "Your account is active",
+      saludo: "welcome to the HPE MasterClass.",
+      cuerpo: "Your account has been activated and your registration is confirmed. You can now sign in with your email and the password you created.",
+      boton: "Sign in",
+   },
+};
+
 const escapar = (s) => String(s).replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 export const correoToken = ({ tipo, idioma = "es", nombre, token }) => {
@@ -76,4 +93,20 @@ export const correoToken = ({ tipo, idioma = "es", nombre, token }) => {
       <p style="margin:28px 0"><a href="${url}" style="background:#01a982;color:#fff;padding:12px 22px;border-radius:24px;text-decoration:none;font-weight:bold">${c.boton}</a></p>
       <p style="font-size:12px;color:#666">${url}</p></div>`;
    return { subject: c.subject, html, text: `${c.titulo}\n${c.cuerpo}\n${url}`, url };
+};
+
+// Se envía una sola vez, cuando el participante activa su cuenta (crea su contraseña).
+export const correoBienvenida = ({ idioma = "es", nombre }) => {
+   const lang = idioma === "en" ? "en" : "es";
+   const c = BIENVENIDA[lang];
+   const url = `${process.env.FRONTEND_URL}/${lang}/login`;
+   const saludo = nombre ? `${nombre}, ${c.saludo}` : c.saludo.charAt(0).toUpperCase() + c.saludo.slice(1);
+   const html = `<div style="font-family:Arial,sans-serif;max-width:560px;margin:auto;color:#292d3a">
+      <div style="height:6px;background:#01a982"></div>
+      <h2 style="margin:24px 0 8px">${c.titulo}</h2>
+      <p>${escapar(saludo)}</p>
+      <p>${c.cuerpo}</p>
+      <p style="margin:28px 0"><a href="${url}" style="background:#01a982;color:#fff;padding:12px 22px;border-radius:24px;text-decoration:none;font-weight:bold">${c.boton}</a></p>
+      <p style="font-size:12px;color:#666">${url}</p></div>`;
+   return { subject: c.subject, html, text: `${c.titulo}\n${saludo}\n${c.cuerpo}\n${url}`, url };
 };

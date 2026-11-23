@@ -5,7 +5,7 @@ import { UserDao } from "../dao/userDao.js";
 import { TokenDao } from "../dao/tokenDao.js";
 import { fallo } from "../utils/errores.js";
 import { generarToken, hashToken } from "../utils/tokens.js";
-import { enviarCorreo, correoToken } from "../utils/mail.js";
+import { enviarCorreo, correoToken, correoBienvenida } from "../utils/mail.js";
 import {
    CANALES,
    IDIOMAS,
@@ -124,15 +124,21 @@ export const AuthService = {
       if (typeof token !== "string" || token.length < 20 || token.length > 200) fallo("TOKEN_INVALIDO");
       validarPassword(password);
       const hash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-      return withTransaction(async (client) => {
+      const { tipo, id_user, rol } = await withTransaction(async (client) => {
          const t = await TokenDao.findVigente(hashToken(token), client);
          if (!t) fallo("TOKEN_INVALIDO");
          const user = await UserDao.findAuthById(t.id_user, client);
          if (!user?.activo) fallo("CUENTA_INACTIVA");
          await UserDao.setPassword(t.id_user, hash, client);
          await TokenDao.invalidarDeUsuario(t.id_user, client);
-         return { tipo: t.tipo };
+         return { tipo: t.tipo, id_user: t.id_user, rol: user.rol };
       });
+      // Bienvenida: sólo al activar la cuenta (no en recuperaciones) y ya con la transacción confirmada.
+      if (tipo === "ACTIVACION" && rol === "PARTICIPANTE") {
+         const u = await UserDao.findById(id_user);
+         if (u) await enviarCorreo({ to: u.email, ...correoBienvenida({ idioma: u.idioma, nombre: u.nombre_completo }) });
+      }
+      return { tipo };
    },
 
    async cambiarPassword(id_user, { actual, nueva }) {
